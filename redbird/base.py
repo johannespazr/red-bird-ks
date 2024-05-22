@@ -2,11 +2,11 @@
 from abc import abstractmethod, ABC
 from operator import getitem, setitem
 from textwrap import dedent, indent, shorten
-from typing import Any, ClassVar, Dict, Generator, Iterator, List, Mapping, Optional, Tuple, Type, TypeVar, Union
+from typing import Literal, Any, ClassVar, Dict, Generator, Iterator, List, Mapping, Optional, Tuple, Type, TypeVar, Union
 from dataclasses import dataclass
 import warnings
 
-from pydantic import BaseModel, Field, validator
+from pydantic import ConfigDict, BaseModel, field_validator
 
 from redbird.exc import ConversionWarning, DataToItemError, KeyFoundError, ItemToDataError, _handle_conversion_error
 from redbird.utils.case import to_case
@@ -111,7 +111,7 @@ class BaseResult(ABC):
     def format_query(self, query:dict) -> dict:
         "Turn the query to a form that's understandable by the underlying database"
         qry = self.repo.query_model(**query)
-        return qry.format(self.repo) if hasattr(qry, "format") else qry.dict()
+        return qry.format(self.repo) if hasattr(qry, "format") else qry.model_dump()
 
 class BaseRepo(ABC, BaseModel):
     """Abstract Repository
@@ -141,8 +141,13 @@ class BaseRepo(ABC, BaseModel):
     """
     cls_result: ClassVar[Type[BaseResult]]
 
+    model_config = ConfigDict(
+        extra="allow",
+        from_attributes=True
+    )
+
     model: Type = dict
-    id_field: Optional[str]
+    id_field: Optional[str] = None
     
     query_model: Optional[Type[BaseModel]] = BasicQuery
 
@@ -150,13 +155,13 @@ class BaseRepo(ABC, BaseModel):
     field_access: Literal['attr', 'key', 'infer'] = 'infer'
 
     # Attributes that specifies how the repo behaves
-    ordered: bool = Field(default=False, const=True)
+    ordered: Literal[False] = False
 
-    @validator('id_field', always=True)
+    @field_validator('id_field')
     def set_id_field(cls, value, values):
         if value is None:
             # Get id_field from model
-            mdl = values.get("model")
+            mdl = values.data.get("model")
             return getattr(mdl, "__id_field__", None)
         return value
 
@@ -289,7 +294,7 @@ class BaseRepo(ABC, BaseModel):
             return item
         elif isinstance(item, BaseModel):
             # Pydantic model
-            return item.dict(exclude_unset=exclude_unset)
+            return item.model_dump(exclude_unset=exclude_unset)
         else:
             return dict(**item)
 

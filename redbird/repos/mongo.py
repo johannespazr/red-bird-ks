@@ -1,8 +1,8 @@
 
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import Literal, TYPE_CHECKING, Any, Dict, Optional, Type, Union
 
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ValidationError
 
 from redbird.base import BaseResult, BaseRepo
 from redbird.exc import KeyFoundError
@@ -134,8 +134,8 @@ class MongoRepo(TemplateRepo):
         repo = MongoRepo(client=MongoClient("mongodb://localhost:27017"))
     """
     # cls_result = MongoResult
-    default_id_field = "_id"
-    cls_session = MongoSession
+    default_id_field:str = "_id"
+    cls_session:Type = MongoSession
 
     __operators__ = {
         GreaterThan: "$gt",
@@ -145,11 +145,11 @@ class MongoRepo(TemplateRepo):
         NotEqual: "$ne",
         In: "$in",
     }
-    session: Any
-    database: Optional[str]
-    collection: Optional[str]
+    session: Any = None
+    database: Optional[str] = None
+    collection: Optional[str] = None
 
-    ordered: bool = Field(default=True, const=True)
+    ordered: Literal[True] = True
 
     def __init__(self, *args, uri=None, client=None, session=None, **kwargs):
         if uri is not None:

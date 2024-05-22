@@ -1,8 +1,8 @@
 
 from operator import getitem
-from typing import Any, Dict, List
+from typing import Literal, Any, Dict, List
 
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, PrivateAttr
 from redbird import BaseRepo, BaseResult
 from redbird.templates import TemplateRepo
 from redbird.exc import KeyFoundError
@@ -56,7 +56,7 @@ class MemoryRepo(TemplateRepo):
     #cls_result = MemoryResult
     collection: List[Any] = []
 
-    ordered: bool = Field(default=False, const=True)
+    ordered: Literal[False] = False
     _session = PrivateAttr()
     
     def insert(self, item):
