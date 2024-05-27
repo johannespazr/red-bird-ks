@@ -1,11 +1,11 @@
 
 from operator import getitem
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Union, TextIO
+from typing import Literal, Any, Dict, Iterator, List, Optional, Union, TextIO
 
 import csv
 
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, PrivateAttr
 from redbird import BaseRepo, BaseResult
 from redbird.base import Data, Item
 from redbird.templates import TemplateRepo
@@ -66,7 +66,7 @@ class CSVFileRepo(TemplateRepo):
     kwds_csv: dict = {}
 
     _session = PrivateAttr()
-    ordered: bool = Field(default=True, const=True)
+    ordered: Literal[True] = True
 
     def insert(self, item):
         file_non_zero = self.filename.exists() and self.filename.stat().st_size > 0
@@ -99,8 +99,8 @@ class CSVFileRepo(TemplateRepo):
         "Get headers of the CSV file (using the model)"
         if self.fieldnames is not None:
             return self.fieldnames
-        elif hasattr(self.model, "__fields__"):
-            return list(self.model.__fields__)
+        elif hasattr(self.model, "model_fields"):
+            return list(self.model.model_fields)
         else:
             raise TypeError("Cannot determine CSV headers")
 
